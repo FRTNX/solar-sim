@@ -8,6 +8,7 @@ class Environment:
     
     def __init__(self):
         """Initialise environment in 'frozen' state."""
+        self._id = ''
         self._datetime = ''
         self._active = False
         self._update_interval = 1

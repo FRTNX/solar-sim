@@ -44,8 +44,8 @@ class PhotoVoltaicSystem:
         while self._active:
             [panel.update_temparature() for panel in self._panels]  # update panel temparature based on env temp
             self._charge_battery_array()                            # send output from solar array to battery array
-            panel_details = self._panels.get_panel_details()
-            battery_details = self._batteries.get_battery_details()
+            panel_details = self._panels.json()
+            battery_details = self._batteries.json()
             state = {
                 'time': self._environment.current_time,
                 'panel_details': panel_details,
@@ -57,3 +57,14 @@ class PhotoVoltaicSystem:
     def _charge_battery_array(self):
         panel_details = self._panels.get_panel_details()
         self._batteries.charge(panel_details['total_output'])
+
+    def json(self):
+        """Return json representation of PV system."""
+        return {
+            'system_id': self._id,
+            'environment_id': self._environment._id,
+            'panels': [panel._id for panel in self._panels],
+            'batteries': [battery._id for battery in self._batteries],
+            'active': self._active,
+            'time_series': self._time_series
+        }

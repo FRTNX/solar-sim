@@ -1,5 +1,4 @@
 from typing import List
-from simulator_types import Celcius, Percentage, Watt, KiloWatt, Volt
 
 from environment import Environment
 from pv_system import PhotoVoltaicSystem
@@ -55,7 +54,7 @@ def create_env():
     battery_array.add(battery)
     system = PhotoVoltaicSystem(environment=environment, panels=solar_array, batteries=battery_array)
     ACTIVE_SIMS.append(system)
-    return { 'system': system.state() }
+    return { 'result': system.json() }
 
 
 @app.get('/pv/start')
@@ -85,6 +84,19 @@ def stop_pv_system():
 
 
 @app.get('/pv/panel')
+def get_panel():
+    """Get panel data."""
+    try:
+        system_id = ''
+        panel_id = ''
+        system: PhotoVoltaicSystem = get_pv_system(system_id)
+        panel_details = system._panels.get(panel_id)
+        return { 'result': panel_details }
+    except Exception as e:
+        return { 'error': str(e) }
+
+
+@app.get('/pv/panels')
 def get_panels():
     """Get panels connected to a specified pv system."""
     try:
@@ -100,9 +112,9 @@ def add_panel():
     """Add panel to solar array."""
     try:
         system_id = ''
-        pv_system: PhotoVoltaicSystem = get_pv_system(system_id)
+        system: PhotoVoltaicSystem = get_pv_system(system_id)
         panel = SolarArray({
-            'environment': pv_system._environment,
+            'environment': system._environment,
             'standard_conditions': {
                 'power_rating': 100,
                 'efficiency': 0.23,
@@ -111,18 +123,63 @@ def add_panel():
             'temp_coefficient': 0.11,
             'area': 3
         })
-        pv_system._panels.add(panel)
+        system._panels.add(panel)
         return { 'result': 'SUCCESS' }
     except Exception as e:
         return { 'error': str(e) }
 
 
-@app.post('/pv/panel/remove')
+@app.delete('/pv/panel/remove')
 def remove_panel():
-    """"""
+    """Remove panel from target PV system."""
+    try:
+        system_id = ''
+        panel_id = ''
+        system: PhotoVoltaicSystem = get_pv_system(system_id)
+        return system._panels.remove(panel_id)
+    except Exception as e:
+        return { 'error': str(e) }    
     
-# @app.get('/pv/battery')
+@app.get('/pv/battery')
+def get_battery():
+    """"""
+    try:
+        system_id = ''
+        battery_id = ''
+        system: PhotoVoltaicSystem = get_pv_system(system_id)
+        battery_details = system._batteries.get(battery_id)
+        return { 'result': battery_details }
+    except Exception as e:
+        return { 'error': str(e) }
+    
+@app.get('/pv/batteries')
+def get_batteries():
+    """Get batteries connected to target PV system."""
+    try:
+        system_id = ''
+        system: PhotoVoltaicSystem = get_pv_system(system_id)
+        return { 'result': [battery.json() for battery in system._batteries] }
+    except Exception as e:
+        return { 'error': str(e) }
 
-# @app.post('/pv/battery/add')
+@app.post('/pv/battery/add')
+def add_battery():
+    """Add battery to target PV system."""
+    try:
+        system_id = ''
+        system: PhotoVoltaicSystem = get_pv_system(system_id)
+        battery = Battery(volts='', amps='')
+        return system._batteries.add(battery)
+    except Exception as e:
+        return { 'error': str(e) }
 
-# @app.delete('/pv/battery/remove')
+@app.delete('/pv/battery/remove')
+def remove_battery():
+    """Add battery to target PV system."""
+    try:
+        system_id = ''
+        battery_id = ''
+        system: PhotoVoltaicSystem = get_pv_system(system_id)
+        return system._batteries.remove(battery_id)
+    except Exception as e:
+        return { 'error': str(e) }

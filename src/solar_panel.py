@@ -1,3 +1,4 @@
+from typing import List
 from simulator_types import Celcius, Percentage, Watt, KiloWatt, Volt
 
 from environment import Environment
@@ -74,28 +75,42 @@ class SolarArray:
     
     def __init__(self):
         """Create an empty solar panel array."""
-        self._panels = []
-        self._array_temparature = 0
-        self._total_output = 0
+        self._panel_array: List[SolarPanel] = []
+        self._array_temparature: Celcius = 0
+        self._total_output: Watt = 0
+
+    def __iter__(self):
+        for panel in self._panel_array:
+            yield panel
+            
+    def __len__(self):
+        return len(self._panel_array)
         
     def add(self, panel: SolarPanel):
         """Add a solar panel to the array."""
-        self._panels.append(panel)
+        self._panel_array.append(panel)
         return { 'result': 'SUCCESS' }
         
+    def get(self, panel_id: str):
+        """Get target solar panel details."""
+        for panel in self._panel_array:
+            if panel._id == panel_id:
+                return panel.json()
+        raise ValueError('PANEL_NOT_FOUND')
+    
     def remove(self, panel_id: str):
         """Remove a solar panel from the array."""
-        for panel in self._panels:
+        for panel in self._panel_array:
             if panel['_id'] == panel_id:
-                self._panels.pop(self._panels.index(panel))
+                self._panel_array.pop(self._panel_array.index(panel))
                 return { 'result':'SUCCESS' }
-        return { 'error': 'PANEL_NOT_FOUND' }
+        raise ValueError('PANEL_NOT_FOUND')
         
-    def get_panel_details(self):
+    def json(self):
         """Return current panel states."""
-        panel_details = [panel.status() for panel in self._panels]
+        panel_details = [panel.status() for panel in self._panel_array]
         panel_temps = [panel['panel_temparature'] for panel in panel_details]
-        self._array_temparature = sum(panel_temps) / len(self._panels)
+        self._array_temparature = sum(panel_temps) / len(self._panel_array)
         self._total_output = sum([panel['power_output'] for panel in panel_details])
         return {
             'array_temparature': self._array_temparature,

@@ -1,3 +1,4 @@
+from typing import List, Literal
 from simulator_types import Percentage, KiloWatt, Volt
 from utils import calculate_watts
 
@@ -46,26 +47,40 @@ class Battery:
 class BatteryArray:
     """Creates a single interface for multiple connected batteries."""
     
-    def __init__(self):
+    def __init__(self, connection_type: Literal['series', 'parallel'] = 'series'):
         """Create an empty battery array."""
-        self._battery_array = []
+        self._battery_array: List[Battery] = []
         self._capacity: Volt = 0
         self._voltage: Volt = 0
-        self._connection_type = None
+        self._connection_type: str = connection_type
         self._time_series = []
         
-    def add(self, battery: Battery, connection_type: str='series'):
+    def __iter__(self):
+        for battery in self._battery_array:
+            yield battery
+            
+    def __len__(self):
+        return len(self._battery_array)
+        
+    def add(self, battery: Battery):
         """Connect a new battery."""
         # todo: validate battery compatability
         self._battery_array.append(battery)
         return { 'result': 'SUCCESS' }
+
+    def get(self, battery_id: str):
+        """Get target battery details."""
+        for battery in self._battery_array:
+            if battery._id == battery_id:
+                return battery.json()
+        raise ValueError('BATTERY_NOT_FOUND')
         
     def remove(self, battery_id):
         for battery in self._battery_array:
             if battery['_id'] == battery_id:
                 self._battery_array.pop(self._battery_array.index(battery))
                 return { 'result': 'SUCCESS' }
-        return { 'error': 'BATTERY_NOT_FOUND' }
+        raise ValueError('BATTERY_NOT_FOUND')
         
     def connected_batteries(self):
         """Return all connected batteries."""
@@ -80,7 +95,7 @@ class BatteryArray:
         power_per_battery = power / len(self._battery_array)
         [battery.charge(power_per_battery) for battery in self._battery_array]
         
-    def get_battery_details(self):
+    def json(self):
         battery_details = [battery.status() for battery in self._battery_array]
         avg_voltage = sum([battery['available_power']['value'] for battery in battery_details]) / len(battery_details)
         return {
