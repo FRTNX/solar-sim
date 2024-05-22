@@ -8,6 +8,8 @@ import time
 import json
 import threading
 
+from fastapi import FastAPI
+
 
 class Environment:
     """Simulates environemt, overseeing the passage of time."""
@@ -56,20 +58,31 @@ class Environment:
             return int_time
         except:
             return 0
+        
+
+def calculate_volts(watts, amps):
+    """Calculate voltage from watts and amperes."""
+    return watts / amps
+
+
+def calculate_watts(volts, amps):
+    """Calculate watts from voltage and amperes."""
+    return volts * amps
 
         
 class Battery:
     """A battery class."""
     
-    def __init__(self, capacity: int = 12, amps: int = 50):
+    def __init__(self, volts: int = 12, amps: int = 50):
         self._id = ''           # todo: generate unique id
-        self._capacity: KiloWatt = capacity
-        self._state_of_charge: Percentage = 0.95
-        self._max_charge_rate: KiloWatt = 0
-        self._max_discharge_rate: KiloWatt = 0
+        self._volts: Volt = volts
+        self._state_of_charge: Percentage = 0.50
+        self._max_charge_rate: KiloWatt = 1000
+        self._max_discharge_rate: KiloWatt = 1000
         self._depth_of_charge: Percentage = 0.50
         self._amperes: int = amps
-        self._available_power = self._capacity * self._state_of_charge
+        self._available_power: KiloWatt = calculate_watts(self._volts * self._state_of_charge, self._amperes)
+        self._capacity: KiloWatt = calculate_watts(self._volts, self._amperes)
 
     def charge(self, power: KiloWatt):
         """Add to available volts."""
@@ -83,12 +96,12 @@ class Battery:
         """"""
         
     def status(self):
-        available_power = self._capacity * self._state_of_charge
         return {
             'battery_id': self._id,
+            'type': self._volts,
             'capacity': self._capacity,
             'state_of_charge': self._state_of_charge,
-            'available_power': { 'unit': 'kilowatt', 'value': available_power },
+            'available_power': { 'unit': 'kilowatt', 'value': self._available_power },
             'voltage': self._available_power / self._amperes
         }
     
@@ -97,7 +110,7 @@ class BatteryArray:
     """Creates a single interface for multiple connected batteries."""
     
     def __init__(self):
-        """"""
+        """Create an empty battery array."""
         self._battery_array = []
         self._capacity: Volt = 0
         self._voltage: Volt = 0
@@ -163,14 +176,9 @@ class SolarPanel:
     def _get_power_output(self):
         """Takes solar irradiance and panel temparature as input, returns panel power
         output in watts."""
-        # self._update()
-        solar_irradiance = self._solar_irradiance() * self._area
+        solar_irradiance = self._environment.solar_irradiance() * self._area
         efficiency = self._calculate_efficiency()
-        return solar_irradiance * efficiency
-        
-    def _solar_irradiance(self):
-        """Returns solar irradiance with respect to time.""" # todo: factor location and weather
-        return self._environment.solar_irradiance()
+        return (solar_irradiance * efficiency) / 3
         
     def _calculate_efficiency(self):
         """"""
@@ -181,14 +189,14 @@ class SolarPanel:
         else:
             return self._efficiency
         
-    def _cooling_factors(self):
-        """Returns the temparature drop accounted for by water and air conditioners."""
-        return 0      # todo: add appropriate mechanisms
-        
     def _get_panel_temparature(self):
         """Calculate panel temparature based on environment temparatures and cooling factors."""
         environment_temp = self._environment.temparature
         return environment_temp - self._cooling_factors()
+        
+    def _cooling_factors(self):
+        """Returns the temparature drop accounted for by water and air conditioners."""
+        return 0      # todo: add appropriate mechanisms
 
 
 class SolarArray:
@@ -294,7 +302,7 @@ if __name__ == '__main__':
         'temp_coefficient': 0.11,
         'area': 3                  # meters squared
     })
-    battery = Battery(capacity=12, amps=50)
+    battery = Battery(volts=12, amps=100)
     solar_array = SolarArray()
     battery_array = BatteryArray()
     solar_array.add(panel)
@@ -302,7 +310,6 @@ if __name__ == '__main__':
     system = PhotoVoltaicSystem(environment=environment, panels=solar_array, batteries=battery_array)
     sim_time_thread = threading.Thread(target=simulated_time, args=(environment,))
     sim_time_thread.start()
-    environment.start()
     system.start()
     while True:
         print(json.dumps(system.state()))
