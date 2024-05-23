@@ -1,13 +1,13 @@
 from typing import List, Literal
 from simulator_types import Percentage, KiloWatt, Volt
-from utils import calculate_watts
+from utils import calculate_watts, uuid
 
 
 class Battery:
     """A battery class."""
     
     def __init__(self, volts: int = 12, amps: int = 50):
-        self._id = ''           # todo: generate unique id
+        self._id = uuid('BATTERY')
         self._volts: Volt = volts
         self._state_of_charge: Percentage = 0.50
         self._max_charge_rate: KiloWatt = 1000
@@ -38,8 +38,7 @@ class Battery:
             'voltage': self._available_power / self._amperes
         }
     
-    # self.status() is used for internal use where as json is for ui
-    def json(self):
+    def json(self):     # self.status() is used for internal use where as json is for ui
         """Return json representation of battery."""
         return self.status()
     
@@ -49,6 +48,7 @@ class BatteryArray:
     
     def __init__(self, connection_type: Literal['series', 'parallel'] = 'series'):
         """Create an empty battery array."""
+        self._id = uuid('B_ARRAY')
         self._battery_array: List[Battery] = []
         self._capacity: Volt = 0
         self._voltage: Volt = 0
@@ -96,9 +96,11 @@ class BatteryArray:
         [battery.charge(power_per_battery) for battery in self._battery_array]
         
     def json(self):
+        """Return json representation of battery array."""
         battery_details = [battery.status() for battery in self._battery_array]
         avg_voltage = sum([battery['available_power']['value'] for battery in battery_details]) / len(battery_details)
         return {
+            'array_id': self._id,
             'voltage': avg_voltage,
             'battery_details': battery_details
         }

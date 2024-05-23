@@ -2,13 +2,14 @@ from typing import List
 from simulator_types import Celcius, Percentage, Watt, KiloWatt, Volt
 
 from environment import Environment
+from utils import uuid
 
 
 class SolarPanel:
     """A solar panel."""
     
     def __init__(self, params):
-        self._id: str = ''
+        self._id: str = uuid('PANEL')
         self._environment: Environment = params['environment']
         self._power_rating: Watt = params['standard_conditions']['power_rating']   # max watts per hour under STC
         self._efficiency: Percentage = params['standard_conditions']['efficiency']
@@ -75,6 +76,7 @@ class SolarArray:
     
     def __init__(self):
         """Create an empty solar panel array."""
+        self._id = uuid('SP_ARRAY')
         self._panel_array: List[SolarPanel] = []
         self._array_temparature: Celcius = 0
         self._total_output: Watt = 0
@@ -107,12 +109,13 @@ class SolarArray:
         raise ValueError('PANEL_NOT_FOUND')
         
     def json(self):
-        """Return current panel states."""
+        """Return current panel status."""
         panel_details = [panel.status() for panel in self._panel_array]
         panel_temps = [panel['panel_temparature'] for panel in panel_details]
         self._array_temparature = sum(panel_temps) / len(self._panel_array)
         self._total_output = sum([panel['power_output'] for panel in panel_details])
         return {
+            'array_id': self._id,
             'array_temparature': self._array_temparature,
             'total_output': self._total_output,
             'panel_details': panel_details

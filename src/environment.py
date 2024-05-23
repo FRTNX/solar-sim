@@ -1,4 +1,5 @@
 from simulator_types import Celcius, Watt
+from utils import uuid
 
 from datetime import datetime
 
@@ -8,7 +9,7 @@ class Environment:
     
     def __init__(self):
         """Initialise environment in 'frozen' state."""
-        self._id = ''
+        self._id = uuid('ENVIRON')
         self._datetime = ''
         self._active = False
         self._update_interval = 1
@@ -51,3 +52,6 @@ class Environment:
             return int_time
         except:
             return 0
+        
+    def json(self):
+        """Return json representation of environment."""
