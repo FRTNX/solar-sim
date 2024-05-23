@@ -1,5 +1,5 @@
-from typing import List, TypedDict, Union
-from pydantic import BaseModel
+from typing import List, Union
+from typing_extensions import TypedDict
 
 from environment import Environment
 from pv_system import PhotoVoltaicSystem
@@ -12,6 +12,7 @@ from freezegun import freeze_time
 import time
 import threading
 import fastapi
+
 
 app = fastapi.FastAPI()
 
