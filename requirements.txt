@@ -1,4 +1,3 @@
-threading
 freezegun
 fastapi
 uvicorn
