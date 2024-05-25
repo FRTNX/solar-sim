@@ -17,18 +17,17 @@ class SolarPanel:
         self._optimal_temparature: Celcius = params['standard_conditions']['temparature']['value']
         self._current_temparature: Celcius = 0.0
         self._area = params['area']
+        self._time_series = []
 
     def status(self):
         """Return panel status."""
-        return {
+        state = {
             'panel_id': self._id,
             'power_output': self._get_power_output(),
             'panel_temparature': self._get_panel_temparature()
         }
-        
-    def update_temparature(self):
-        """Update panel temparature."""
-        self._get_panel_temparature()
+        self._time_series.append(state)
+        return state
         
     def _get_power_output(self):
         """Takes solar irradiance and panel temparature as input, returns panel power
@@ -67,7 +66,8 @@ class SolarPanel:
             'temparature_coefficient': self._temparature_coefficient,
             'optimal_temparature': self._optimal_temparature,
             'current_temparature': self._current_temparature,
-            'area': self._area
+            'area': self._area,
+            'time_series': self._time_series
         }
 
 
@@ -80,6 +80,7 @@ class SolarArray:
         self._panel_array: List[SolarPanel] = []
         self._array_temparature: Celcius = 0
         self._total_output: Watt = 0
+        self._time_series = []
 
     def __iter__(self):
         for panel in self._panel_array:
@@ -105,7 +106,7 @@ class SolarArray:
         for panel in self._panel_array:
             if panel['_id'] == panel_id:
                 self._panel_array.pop(self._panel_array.index(panel))
-                return { 'result':'SUCCESS' }
+                return { 'result': 'SUCCESS' }
         raise ValueError('PANEL_NOT_FOUND')
         
     def json(self):
@@ -118,5 +119,4 @@ class SolarArray:
             'array_id': self._id,
             'array_temparature': self._array_temparature,
             'total_output': self._total_output,
-            'panel_details': panel_details
         }

@@ -16,7 +16,19 @@ class Battery:
         self._amperes: int = amps
         self._available_power: KiloWatt = calculate_watts(self._volts * self._state_of_charge, self._amperes)
         self._capacity: KiloWatt = calculate_watts(self._volts, self._amperes)
+        self._time_series = []
 
+    def status(self):
+        state = {
+            'battery_id': self._id,
+            'capacity': self._capacity,
+            'state_of_charge': self._state_of_charge,
+            'available_power': { 'unit': 'kilowatt', 'value': self._available_power },
+            'voltage': self._available_power / self._amperes
+        }
+        self._time_series.append(state)
+        return state
+    
     def charge(self, power: KiloWatt):
         """Add to available volts."""
         if power > self._max_charge_rate:
@@ -27,8 +39,9 @@ class Battery:
         
     def discharge(self, power: KiloWatt):
         """"""
-        
-    def status(self):
+    
+    def json(self):     # self.status() is used for internal use where as json is for ui
+        """Return json representation of battery."""
         return {
             'battery_id': self._id,
             'type': self._volts,
@@ -37,10 +50,6 @@ class Battery:
             'available_power': { 'unit': 'kilowatt', 'value': self._available_power },
             'voltage': self._available_power / self._amperes
         }
-    
-    def json(self):     # self.status() is used for internal use where as json is for ui
-        """Return json representation of battery."""
-        return self.status()
     
 
 class BatteryArray:
@@ -102,5 +111,5 @@ class BatteryArray:
         return {
             'array_id': self._id,
             'voltage': avg_voltage,
-            'battery_details': battery_details
+            'batteries': battery_details
         }

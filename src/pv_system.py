@@ -47,14 +47,13 @@ class PhotoVoltaicSystem:
     def _update(self):
         """Get current readings from solar and battery arrays."""
         while self._active:
-            [panel.update_temparature() for panel in self._panels]  # update panel temparature based on env temp
             self._charge_battery_array()                            # send output from solar array to battery array
             panel_details = self._panels.json()
             battery_details = self._batteries.json()
             state = {
                 'time': self._environment.current_time,
-                'panel_details': panel_details,
-                'battery_details': battery_details
+                'solar_array_output': panel_details['total_output'],
+                'battery_array_power': battery_details['voltage']
             }
             self._time_series.append(state)
             time.sleep(self._update_interval)
@@ -63,13 +62,31 @@ class PhotoVoltaicSystem:
         panel_details = self._panels.json()
         self._batteries.charge(panel_details['total_output'])
 
+   # api-facing
     def json(self):
         """Return json representation of PV system."""
         return {
             'system_id': self._id,
-            'datetime': self._environment.current_time,
-            'panels': [panel._id for panel in self._panels],
-            'batteries': [battery._id for battery in self._batteries],
             'active': self._active,
+            'datetime': self._environment.current_time,
+            'panels': [
+                {
+                    'panel_id': panel._id,
+                    'rating': panel._power_rating,
+                    'time_series': panel._time_series
+                }
+                for panel in self._panels
+            ],
+            'batteries': [
+                {
+                    'battery_id': battery._id,
+                    'capacity': battery._volts,
+                    'amps': battery._amperes,
+                    'time_series': battery._time_series
+                }
+                for battery in self._batteries
+            ],
+            'total_solar_output': self._totol_solar_output,
+            'battery_array_power': self._total_available_volts,
             'time_series': self._time_series
         }

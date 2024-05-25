@@ -2,6 +2,7 @@ import time
 import requests
 
 BASE_URL = 'http://localhost:8001'
+# BASE_URL = 'https://solar-sim.onrender.com'
 
 test_panel = {
     'stc': {
@@ -60,6 +61,6 @@ if __name__ == '__main__':
     
     # check time lapses as expected
     print('checking time simulation...')
-    for i in range(10):
+    for i in range(20):
         print(get_system_details(system_id))
         time.sleep(2)

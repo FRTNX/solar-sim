@@ -13,8 +13,17 @@ import time
 import threading
 import fastapi
 
+from starlette.middleware.cors import CORSMiddleware
 
 app = fastapi.FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=['*'],
+    allow_credentials=True,
+    allow_methods=['*'],
+    allow_headers=['*']
+)
 
 
 ACTIVE_SIMS: List[PhotoVoltaicSystem] = []
@@ -60,9 +69,38 @@ def get_pv_system(system_id: str):
 def create_env():
     environment = Environment()                    # initialise environment
     solar_array = SolarArray()                     # create empty solar array
-    battery_array = BatteryArray()                 # create emoty battery array
+    battery_array = BatteryArray()                 # create empty battery array
     system = PhotoVoltaicSystem(environment=environment, panels=solar_array, batteries=battery_array)
     ACTIVE_SIMS.append(system)
+    return { 'result': system.json() }
+
+@app.get('/pv/init/default')
+def create_default_sim():
+    """Initialise and start default simulation: environment, a panel and a battery."""
+    environment = Environment()
+    solar_array = SolarArray()
+    battery_array = BatteryArray()
+    default_panel = SolarPanel({
+            'environment': environment,
+            'standard_conditions': {
+                'power_rating': 100,
+                'efficiency': 0.23,
+                'temparature': {
+                    'unit': 'Celcius',
+                    'value': 25
+                }
+            },
+            'temp_coefficient': 0.11,
+            'area': 3
+        })
+    default_battery = Battery(volts=12, amps=100)
+    solar_array.add(default_panel)
+    battery_array.add(default_battery)
+    system = PhotoVoltaicSystem(environment=environment, panels=solar_array, batteries=battery_array)
+    ACTIVE_SIMS.append(system)
+    sim_time_thread = threading.Thread(target=simulated_time, args=(environment,))
+    sim_time_thread.start()
+    system.start()
     return { 'result': system.json() }
 
 
@@ -93,6 +131,7 @@ def stop_pv_system(system_id: str):
     """Stop target PV system."""
     try:
         system: PhotoVoltaicSystem = get_pv_system(system_id)
+        # todo: stop sim time
         system.stop()
         return { 'result': 'SUCCESS' }
     except Exception as e:
