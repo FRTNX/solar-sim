@@ -49,12 +49,13 @@ class IncomingSolarPanel(TypedDict):
     temp_coefficient: Union[int, float]
     area: Union[int, float]
 
-@freeze_time('May 21, 2024', auto_tick_seconds=1800)   # 1 second real time = 30 min sim time
+@freeze_time('May 21, 2024', auto_tick_seconds=300)   # 1 second real time = 30 min sim time
 def simulated_time(environment: Environment):
     """Updates an environment's time value based on specified interval."""
     while True:
-        environment.set_time(datetime.now())
-        time.sleep(1)
+        if environment._active:
+            environment.set_time(datetime.now())
+            time.sleep(1)
 
 
 def get_pv_system(system_id: str):
@@ -80,7 +81,7 @@ def create_default_sim():
     environment = Environment()
     solar_array = SolarArray()
     battery_array = BatteryArray()
-    default_panel = SolarPanel({
+    panels = [SolarPanel({
             'environment': environment,
             'standard_conditions': {
                 'power_rating': 100,
@@ -92,12 +93,13 @@ def create_default_sim():
             },
             'temp_coefficient': 0.11,
             'area': 3
-        })
-    default_battery = Battery(volts=12, amps=100)
-    solar_array.add(default_panel)
-    battery_array.add(default_battery)
+        }) for i in range(2)]
+    batteries = [Battery(volts=12, amps=100) for battery in range(2)]
+    [solar_array.add(panel) for panel in panels]
+    [battery_array.add(battery) for battery in batteries]
     system = PhotoVoltaicSystem(environment=environment, panels=solar_array, batteries=battery_array)
     ACTIVE_SIMS.append(system)
+    environment.start()
     sim_time_thread = threading.Thread(target=simulated_time, args=(environment,))
     sim_time_thread.start()
     system.start()
@@ -131,8 +133,8 @@ def stop_pv_system(system_id: str):
     """Stop target PV system."""
     try:
         system: PhotoVoltaicSystem = get_pv_system(system_id)
-        # todo: stop sim time
         system.stop()
+        system._environment.stop()
         return { 'result': 'SUCCESS' }
     except Exception as e:
         return { 'error': str(e) }

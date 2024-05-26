@@ -19,9 +19,11 @@ class PhotoVoltaicSystem:
         self._panels: SolarArray = panels
         self._batteries: BatteryArray = batteries
         self._total_available_volts: Volt = 0
-        self._totol_solar_output: Watt = 0
+        self._total_solar_output: Watt = 0
         self._active: bool = False
         self._update_interval: int = 1
+        self._max_iterations = 100
+        self._iterations = 0
         self._time_series: List[dict] = []
         
     def start(self):
@@ -50,29 +52,43 @@ class PhotoVoltaicSystem:
             self._charge_battery_array()                            # send output from solar array to battery array
             panel_details = self._panels.json()
             battery_details = self._batteries.json()
+            self._total_solar_output = panel_details['total_output']
+            self._total_available_volts = battery_details['voltage']
             state = {
                 'time': self._environment.current_time,
                 'solar_array_output': panel_details['total_output'],
-                'battery_array_power': battery_details['voltage']
+                'battery_array_power': battery_details['voltage'],
+                
             }
             self._time_series.append(state)
-            time.sleep(self._update_interval)
+            print('iterations: ', self._iterations)
+            if self._iterations > self._max_iterations:
+                print('Reached max iterations. Terminating simulation.')
+                self.stop()                                       # stop pv system
+                self._environment.stop()                          # stop environment
+            else:
+                self._iterations += 1
+                time.sleep(self._update_interval)
             
     def _charge_battery_array(self):
         panel_details = self._panels.json()
         self._batteries.charge(panel_details['total_output'])
 
-   # api-facing
     def json(self):
         """Return json representation of PV system."""
         return {
             'system_id': self._id,
             'active': self._active,
             'datetime': self._environment.current_time,
+            'total_solar_output': self._total_solar_output,
+            'battery_array_power': self._total_available_volts,
+            'battery_array_soc' : self._batteries._avg_state_of_charge,
+            'time_series': self._time_series,
             'panels': [
                 {
                     'panel_id': panel._id,
                     'rating': panel._power_rating,
+                    'output': panel._current_output,
                     'time_series': panel._time_series
                 }
                 for panel in self._panels
@@ -82,11 +98,9 @@ class PhotoVoltaicSystem:
                     'battery_id': battery._id,
                     'capacity': battery._volts,
                     'amps': battery._amperes,
+                    'soc': battery._state_of_charge,
                     'time_series': battery._time_series
                 }
                 for battery in self._batteries
-            ],
-            'total_solar_output': self._totol_solar_output,
-            'battery_array_power': self._total_available_volts,
-            'time_series': self._time_series
+            ]
         }

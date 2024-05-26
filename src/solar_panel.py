@@ -2,7 +2,7 @@ from typing import List
 from simulator_types import Celcius, Percentage, Watt, KiloWatt, Volt
 
 from environment import Environment
-from utils import uuid
+from utils import uuid, randomise
 
 
 class SolarPanel:
@@ -16,14 +16,16 @@ class SolarPanel:
         self._temparature_coefficient: Percentage = params['temp_coefficient']
         self._optimal_temparature: Celcius = params['standard_conditions']['temparature']['value']
         self._current_temparature: Celcius = 0.0
+        self._current_output: Watt = 0
         self._area = params['area']
         self._time_series = []
 
-    def status(self):
+    def status(self):   # resolved: called twice as much as pv system and battery
         """Return panel status."""
+        self._current_output = self._get_power_output()
         state = {
             'panel_id': self._id,
-            'power_output': self._get_power_output(),
+            'power_output': self._current_output,
             'panel_temparature': self._get_panel_temparature()
         }
         self._time_series.append(state)
@@ -35,7 +37,7 @@ class SolarPanel:
         """
         solar_irradiance = self._environment.solar_irradiance() * self._area
         efficiency = self._calculate_efficiency()
-        return (solar_irradiance * efficiency) / 3
+        return randomise((solar_irradiance * efficiency) / 3)
         
     def _calculate_efficiency(self):
         """Calculate the panels efficiency based on its temparature."""

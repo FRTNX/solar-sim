@@ -11,7 +11,7 @@ class Environment:
         """Initialise environment in 'frozen' state."""
         self._id = uuid('ENVIRON')
         self._datetime = ''
-        self._active = False
+        self._active = True
         self._update_interval = 1
         self._max_solar_irradiance: Watt = 1000
         self._zenith_time = 1200
@@ -35,6 +35,14 @@ class Environment:
     def temparature(self):
         # todo: calculate by distance from zenith/noon
         return self._temparature
+    
+    def start(self):
+        """Start environment."""
+        self._active = True
+        
+    def stop(self):
+        """Stop environment."""
+        self._active = False
     
     def solar_irradiance(self):
         """Calculate current solar irradiance with respect to time."""

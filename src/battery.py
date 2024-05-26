@@ -9,7 +9,7 @@ class Battery:
     def __init__(self, volts: int = 12, amps: int = 50):
         self._id = uuid('BATTERY')
         self._volts: Volt = volts
-        self._state_of_charge: Percentage = 0.50
+        self._state_of_charge: Percentage = 0.01
         self._max_charge_rate: KiloWatt = 1000
         self._max_discharge_rate: KiloWatt = 1000
         self._depth_of_charge: Percentage = 0.50
@@ -23,7 +23,7 @@ class Battery:
             'battery_id': self._id,
             'capacity': self._capacity,
             'state_of_charge': self._state_of_charge,
-            'available_power': { 'unit': 'kilowatt', 'value': self._available_power },
+            'available_power': self._available_power,
             'voltage': self._available_power / self._amperes
         }
         self._time_series.append(state)
@@ -61,6 +61,7 @@ class BatteryArray:
         self._battery_array: List[Battery] = []
         self._capacity: Volt = 0
         self._voltage: Volt = 0
+        self._avg_state_of_charge = 0.0
         self._connection_type: str = connection_type
         self._time_series = []
         
@@ -107,9 +108,13 @@ class BatteryArray:
     def json(self):
         """Return json representation of battery array."""
         battery_details = [battery.status() for battery in self._battery_array]
-        avg_voltage = sum([battery['available_power']['value'] for battery in battery_details]) / len(battery_details)
+        avg_voltage = sum([battery['available_power'] for battery in battery_details]) / len(battery_details)
+        avg_state_of_charge = sum([battery['state_of_charge'] for battery in battery_details]) / len(battery_details)
+        self._avg_state_of_charge = avg_state_of_charge
+        self._voltage = avg_voltage
         return {
             'array_id': self._id,
             'voltage': avg_voltage,
-            'batteries': battery_details
+            'batteries': battery_details,
+            'avg_state_of_charge': avg_state_of_charge
         }
