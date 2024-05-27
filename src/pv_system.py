@@ -55,13 +55,12 @@ class PhotoVoltaicSystem:
             self._total_solar_output = panel_details['total_output']
             self._total_available_volts = battery_details['voltage']
             state = {
-                'time': self._environment.current_time,
+                'time': self._environment._integer_time(self._environment._datetime, True),
                 'solar_array_output': panel_details['total_output'],
                 'battery_array_power': battery_details['voltage'],
                 
             }
             self._time_series.append(state)
-            print('iterations: ', self._iterations)
             if self._iterations > self._max_iterations:
                 print('Reached max iterations. Terminating simulation.')
                 self.stop()                                       # stop pv system
@@ -83,12 +82,16 @@ class PhotoVoltaicSystem:
             'total_solar_output': self._total_solar_output,
             'battery_array_power': self._total_available_volts,
             'battery_array_soc' : self._batteries._avg_state_of_charge,
+            'solar_irradiance': self._environment.solar_irradiance(),
+            'temparature': self._environment.temparature,
             'time_series': self._time_series,
             'panels': [
                 {
                     'panel_id': panel._id,
                     'rating': panel._power_rating,
                     'output': panel._current_output,
+                    'temparature': panel._current_temparature,
+                    'efficiency': panel._calculate_efficiency(),
                     'time_series': panel._time_series
                 }
                 for panel in self._panels

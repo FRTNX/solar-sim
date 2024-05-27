@@ -1,3 +1,5 @@
+import random
+
 from typing import List
 from simulator_types import Celcius, Percentage, Watt, KiloWatt, Volt
 
@@ -57,7 +59,7 @@ class SolarPanel:
         
     def _cooling_factors(self):
         """Returns the temparature drop accounted for by water and air conditioners."""
-        return 0      # todo: add appropriate mechanisms
+        return random.uniform(0, 3)      # todo: add appropriate mechanisms
 
     def json(self):
         """Return json representation of panel."""

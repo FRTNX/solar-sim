@@ -1,8 +1,8 @@
 import time
 import requests
 
-BASE_URL = 'http://localhost:8001'
-# BASE_URL = 'https://solar-sim.onrender.com'
+# BASE_URL = 'http://localhost:8001'
+BASE_URL = 'https://solar-sim.onrender.com'
 
 test_panel = {
     'stc': {
