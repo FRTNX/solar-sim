@@ -1,7 +1,7 @@
 import random
 
 from typing import List
-from simulator_types import Celcius, Percentage, Watt, KiloWatt, Volt
+from simulator_types import Celcius, Percentage, Watt
 
 from environment import Environment
 from utils import uuid, randomise
@@ -13,11 +13,11 @@ class SolarPanel:
     def __init__(self, params):
         self._id: str = uuid('PANEL')
         self._environment: Environment = params['environment']
-        self._power_rating: Watt = params['standard_conditions']['power_rating']   # max watts per hour under STC
+        self._power_rating: Watt = params['standard_conditions']['power_rating']
         self._efficiency: Percentage = params['standard_conditions']['efficiency']
-        self._temparature_coefficient: Percentage = params['temp_coefficient']
-        self._optimal_temparature: Celcius = params['standard_conditions']['temparature']['value']
-        self._current_temparature: Celcius = 0.0
+        self._temperature_coefficient: Percentage = params['temp_coefficient']
+        self._optimal_temperature: Celcius = params['standard_conditions']['temperature']['value']
+        self._current_temperature: Celcius = 0.0
         self._current_output: Watt = 0
         self._area = params['area']
         self._time_series = []
@@ -28,13 +28,13 @@ class SolarPanel:
         state = {
             'panel_id': self._id,
             'power_output': self._current_output,
-            'panel_temparature': self._get_panel_temparature()
+            'panel_temperature': self._get_panel_temperature()
         }
         self._time_series.append(state)
         return state
         
     def _get_power_output(self):
-        """Takes solar irradiance and panel temparature as input, returns panel power
+        """Takes solar irradiance and panel temperature as input, returns panel power
         output in watts.
         """
         solar_irradiance = self._environment.solar_irradiance() * self._area
@@ -42,23 +42,23 @@ class SolarPanel:
         return randomise((solar_irradiance * efficiency) / 3)
         
     def _calculate_efficiency(self):
-        """Calculate the panels efficiency based on its temparature."""
-        panel_temparature = self._get_panel_temparature()
-        if panel_temparature > self._optimal_temparature:
-            degrees_above_threshold = panel_temparature - self._optimal_temparature
-            temparature_correction_factor = self._temparature_coefficient * degrees_above_threshold
-            return self._efficiency - temparature_correction_factor
+        """Calculate the panels efficiency based on its temperature."""
+        panel_temperature = self._get_panel_temperature()
+        if panel_temperature > self._optimal_temperature:
+            degrees_above_threshold = panel_temperature - self._optimal_temperature
+            temperature_correction_factor = self._temperature_coefficient * degrees_above_threshold
+            return self._efficiency - temperature_correction_factor
         else:
             return self._efficiency
         
-    def _get_panel_temparature(self):
-        """Calculate panel temparature based on environment temparatures and cooling factors."""
-        environment_temp = self._environment.temparature
-        self._current_temparature = environment_temp - self._cooling_factors()
-        return self._current_temparature
+    def _get_panel_temperature(self):
+        """Calculate panel temperature based on environment temperatures and cooling factors."""
+        environment_temp = self._environment.temperature
+        self._current_temperature = environment_temp - self._cooling_factors()
+        return self._current_temperature
         
     def _cooling_factors(self):
-        """Returns the temparature drop accounted for by water and air conditioners."""
+        """Returns the temperature drop accounted for by water and air conditioners."""
         return random.uniform(0, 3)      # todo: add appropriate mechanisms
 
     def json(self):
@@ -67,9 +67,9 @@ class SolarPanel:
             'panel_id': self._id,
             'power_rating': self._power_rating,
             'efficiency': self._efficiency,
-            'temparature_coefficient': self._temparature_coefficient,
-            'optimal_temparature': self._optimal_temparature,
-            'current_temparature': self._current_temparature,
+            'temperature_coefficient': self._temperature_coefficient,
+            'optimal_temperature': self._optimal_temperature,
+            'current_temperature': self._current_temperature,
             'area': self._area,
             'time_series': self._time_series
         }
@@ -82,7 +82,7 @@ class SolarArray:
         """Create an empty solar panel array."""
         self._id = uuid('SP_ARRAY')
         self._panel_array: List[SolarPanel] = []
-        self._array_temparature: Celcius = 0
+        self._array_temperature: Celcius = 0
         self._total_output: Watt = 0
         self._time_series = []
 
@@ -116,11 +116,11 @@ class SolarArray:
     def json(self):
         """Return current panel status."""
         panel_details = [panel.status() for panel in self._panel_array]
-        panel_temps = [panel['panel_temparature'] for panel in panel_details]
-        self._array_temparature = sum(panel_temps) / len(self._panel_array)
+        panel_temps = [panel['panel_temperature'] for panel in panel_details]
+        self._array_temperature = sum(panel_temps) / len(self._panel_array)
         self._total_output = sum([panel['power_output'] for panel in panel_details])
         return {
             'array_id': self._id,
-            'array_temparature': self._array_temparature,
+            'array_temperature': self._array_temperature,
             'total_output': self._total_output,
         }

@@ -1,5 +1,5 @@
 from typing import List, Literal
-from simulator_types import Percentage, KiloWatt, Volt
+from simulator_types import Percentage, Watt, Volt
 from utils import calculate_watts, uuid
 
 
@@ -10,12 +10,12 @@ class Battery:
         self._id = uuid('BATTERY')
         self._volts: Volt = volts
         self._state_of_charge: Percentage = 0.01
-        self._max_charge_rate: KiloWatt = 1000
-        self._max_discharge_rate: KiloWatt = 1000
+        self._max_charge_rate: Watt = 1000
+        self._max_discharge_rate: Watt = 1000
         self._depth_of_charge: Percentage = 0.50
         self._amperes: int = amps
-        self._available_power: KiloWatt = calculate_watts(self._volts * self._state_of_charge, self._amperes)
-        self._capacity: KiloWatt = calculate_watts(self._volts, self._amperes)
+        self._available_power: Watt = calculate_watts(self._volts * self._state_of_charge, self._amperes)
+        self._capacity: Watt = calculate_watts(self._volts, self._amperes)
         self._time_series = []
 
     def status(self):
@@ -29,7 +29,7 @@ class Battery:
         self._time_series.append(state)
         return state
     
-    def charge(self, power: KiloWatt):
+    def charge(self, power: Watt):
         """Add to available volts."""
         if power > self._max_charge_rate:
             power = self._max_charge_rate     # limit power to max rate
@@ -37,7 +37,7 @@ class Battery:
             self._available_power += power
         self._state_of_charge = self._available_power / self._capacity   
         
-    def discharge(self, power: KiloWatt):
+    def discharge(self, power: Watt):
         """"""
     
     def json(self):     # self.status() is used for internal use where as json is for ui
@@ -47,7 +47,7 @@ class Battery:
             'type': self._volts,
             'capacity': self._capacity,
             'state_of_charge': self._state_of_charge,
-            'available_power': { 'unit': 'kilowatt', 'value': self._available_power },
+            'available_power': { 'unit': 'watt', 'value': self._available_power },
             'voltage': self._available_power / self._amperes
         }
     
@@ -96,11 +96,11 @@ class BatteryArray:
         """Return all connected batteries."""
         return self._battery_array
         
-    def charge(self, power: KiloWatt):
+    def charge(self, power: Watt):
         """Charge connected batteries, return state"""
         self._distribute_charge(power)
     
-    def _distribute_charge(self, power: KiloWatt):
+    def _distribute_charge(self, power: Watt):
         """Distribute charge equally amongst connected batteries."""
         power_per_battery = power / len(self._battery_array)
         [battery.charge(power_per_battery) for battery in self._battery_array]

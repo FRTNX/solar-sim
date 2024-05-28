@@ -1,14 +1,13 @@
 import time
 import requests
 
-# BASE_URL = 'http://localhost:8001'
-BASE_URL = 'https://solar-sim.onrender.com'
+BASE_URL = 'http://localhost:8001'
 
 test_panel = {
     'stc': {
         'power_rating': 100,
         'efficiency': 0.23,
-        'temparature': {'unit': 'Celcius', 'value': 25}
+        'temperature': {'unit': 'Celcius', 'value': 25}
     },
     'temp_coefficient': 0.1,
     'area': 3

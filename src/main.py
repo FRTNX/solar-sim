@@ -29,14 +29,14 @@ app.add_middleware(
 ACTIVE_SIMS: List[PhotoVoltaicSystem] = []
 
 
-class TemparatureDict(TypedDict):
+class temperatureDict(TypedDict):
     unit: str
     value: Union[int, float]
 
 class IncomingSTC(TypedDict):
     power_rating: int
     efficiency: float
-    temparature: TemparatureDict
+    temperature: temperatureDict
 
 class IncomingBattery(TypedDict):
     system_id: str
@@ -49,13 +49,12 @@ class IncomingSolarPanel(TypedDict):
     temp_coefficient: Union[int, float]
     area: Union[int, float]
 
-@freeze_time('May 21, 2024', auto_tick_seconds=400)   # 1 second real time = 30 min sim time
+@freeze_time('May 21, 2024', auto_tick_seconds=280)   # 1 second real time = 30 min sim time
 def simulated_time(environment: Environment):
     """Updates an environment's time value based on specified interval."""
-    while True:
-        if environment._active:
-            environment.set_time(datetime.now())
-            time.sleep(1)
+    while environment._active:
+        environment.set_time(datetime.now())
+        time.sleep(1)
 
 
 def get_pv_system(system_id: str):
@@ -86,7 +85,7 @@ def create_default_sim():
             'standard_conditions': {
                 'power_rating': 100,
                 'efficiency': 0.23,
-                'temparature': {
+                'temperature': {
                     'unit': 'Celcius',
                     'value': 25
                 }
@@ -99,7 +98,6 @@ def create_default_sim():
     [battery_array.add(battery) for battery in batteries]
     system = PhotoVoltaicSystem(environment=environment, panels=solar_array, batteries=battery_array)
     ACTIVE_SIMS.append(system)
-    environment.start()
     sim_time_thread = threading.Thread(target=simulated_time, args=(environment,))
     sim_time_thread.start()
     system.start()
@@ -171,9 +169,9 @@ def add_panel(data: IncomingSolarPanel):
             'standard_conditions': {
                 'power_rating': data['stc']['power_rating'],
                 'efficiency': data['stc']['efficiency'],
-                'temparature': {
-                    'unit': data['stc']['temparature']['unit'],
-                    'value':data['stc']['temparature']['value']
+                'temperature': {
+                    'unit': data['stc']['temperature']['unit'],
+                    'value':data['stc']['temperature']['value']
                 }
             },
             'temp_coefficient': data['temp_coefficient'],

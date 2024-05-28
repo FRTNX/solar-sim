@@ -22,7 +22,7 @@ class PhotoVoltaicSystem:
         self._total_solar_output: Watt = 0
         self._active: bool = False
         self._update_interval: int = 1
-        self._max_iterations = 100
+        self._max_iterations = 150
         self._iterations = 0
         self._time_series: List[dict] = []
         
@@ -83,14 +83,14 @@ class PhotoVoltaicSystem:
             'battery_array_power': self._total_available_volts,
             'battery_array_soc' : self._batteries._avg_state_of_charge,
             'solar_irradiance': self._environment.solar_irradiance(),
-            'temparature': self._environment.temparature,
+            'temperature': self._environment.temperature,
             'time_series': self._time_series,
             'panels': [
                 {
                     'panel_id': panel._id,
                     'rating': panel._power_rating,
                     'output': panel._current_output,
-                    'temparature': panel._current_temparature,
+                    'temperature': panel._current_temperature,
                     'efficiency': panel._calculate_efficiency(),
                     'time_series': panel._time_series
                 }
