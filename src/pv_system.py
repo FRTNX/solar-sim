@@ -22,7 +22,7 @@ class PhotoVoltaicSystem:
         self._total_solar_output: Watt = 0
         self._active: bool = False
         self._update_interval: int = 1
-        self._max_iterations = 150
+        self._max_iterations = 1000
         self._iterations = 0
         self._time_series: List[dict] = []
         
