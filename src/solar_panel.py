@@ -124,7 +124,6 @@ class SolarArray:
         
     def json(self):
         """Return current panel status."""
-        self._update()
         panel_details = [panel.status() for panel in self._panel_array]
         panel_temps = [panel['panel_temperature'] for panel in panel_details]
         self._array_temperature = sum(panel_temps) / len(self._panel_array)
