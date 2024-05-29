@@ -1,15 +1,17 @@
 from typing import List
-from simulator_types import Watt, Volt
+from simulator_types import Watt, Volt, Celcius, Ampere
 from utils import uuid, PhotoVoltaicError
 
 from environment import Environment
+from inverter import Inverter
+
 from solar_panel import SolarArray
 from battery import BatteryArray
 
 import time
 import threading
 
-
+        
 class PhotoVoltaicSystem:
     """Simulates a PV system; records state changes over time."""
     
@@ -18,11 +20,12 @@ class PhotoVoltaicSystem:
         self._environment: Environment = environment
         self._panels: SolarArray = panels
         self._batteries: BatteryArray = batteries
+        self._inverter: Inverter = Inverter()
         self._total_available_volts: Volt = 0
         self._total_solar_output: Watt = 0
         self._active: bool = False
         self._update_interval: int = 1
-        self._max_iterations = 1000
+        self._max_iterations = 300
         self._iterations = 0
         self._time_series: List[dict] = []
         
@@ -32,6 +35,10 @@ class PhotoVoltaicSystem:
             raise PhotoVoltaicError('Please connect at least one solar panel.')
         if len(self._batteries) == 0:
             raise PhotoVoltaicError('Please connect at least one battery.')
+        # connect inverter to battery array
+        self._inverter.connect_battery_array(self._batteries)
+        # connect solar panel cooling systems to inverter
+        [panel._cooling_system.add_power_source(self._inverter) for panel in self._panels]
         self._active = True
         update_thread = threading.Thread(target=self._update)
         update_thread.start()
@@ -46,6 +53,10 @@ class PhotoVoltaicSystem:
             return self._time_series[-1]
         return None
     
+    def add_cooling_system(self, coolingSystem):
+        """Add a cooling system for the solar array."""
+        
+    
     def _update(self):
         """Get current readings from solar and battery arrays."""
         while self._active:
@@ -53,11 +64,11 @@ class PhotoVoltaicSystem:
             panel_details = self._panels.json()
             battery_details = self._batteries.json()
             self._total_solar_output = panel_details['total_output']
-            self._total_available_volts = battery_details['voltage']
+            self._total_available_volts = battery_details['available_power']
             state = {
                 'time': self._environment._integer_time(self._environment._datetime, True),
                 'solar_array_output': panel_details['total_output'],
-                'battery_array_power': battery_details['voltage'],
+                'battery_array_power': battery_details['available_power'],
                 
             }
             self._time_series.append(state)

@@ -3,6 +3,7 @@ import random
 from typing import List
 from simulator_types import Celcius, Percentage, Watt
 
+from cooling_system import CoolingSystem
 from environment import Environment
 from utils import uuid, randomise
 
@@ -20,15 +21,16 @@ class SolarPanel:
         self._current_temperature: Celcius = 0.0
         self._current_output: Watt = 0
         self._area = params['area']
+        self._cooling_system: CoolingSystem = CoolingSystem()
         self._time_series = []
 
     def status(self):   # resolved: called twice as much as pv system and battery
         """Return panel status."""
-        self._current_output = self._get_power_output()
+        self._current_output = self._get_power_output()   # updates temperature, etc
         state = {
             'panel_id': self._id,
             'power_output': self._current_output,
-            'panel_temperature': self._get_panel_temperature()
+            'panel_temperature': self._current_temperature
         }
         self._time_series.append(state)
         return state
@@ -59,7 +61,13 @@ class SolarPanel:
         
     def _cooling_factors(self):
         """Returns the temperature drop accounted for by water and air conditioners."""
-        return random.uniform(0, 3)      # todo: add appropriate mechanisms
+        if self._current_temperature > self._optimal_temperature:
+            temperature_difference = self._current_temperature - self._optimal_temperature
+            if self._cooling_system._current_output < temperature_difference:
+                if self._cooling_system._current_output < self._cooling_system._max_output:
+                    self._cooling_system._current_output += 1
+            return self._cooling_system.yield_(self._id)
+        return random.uniform(0, 3)
 
     def json(self):
         """Return json representation of panel."""
@@ -84,6 +92,7 @@ class SolarArray:
         self._panel_array: List[SolarPanel] = []
         self._array_temperature: Celcius = 0
         self._total_output: Watt = 0
+        self._cooling_system = None
         self._time_series = []
 
     def __iter__(self):
@@ -115,6 +124,7 @@ class SolarArray:
         
     def json(self):
         """Return current panel status."""
+        self._update()
         panel_details = [panel.status() for panel in self._panel_array]
         panel_temps = [panel['panel_temperature'] for panel in panel_details]
         self._array_temperature = sum(panel_temps) / len(self._panel_array)

@@ -5,3 +5,4 @@ Percentage = float
 Volt = Union[int, float]
 Watt = Union[int, float]
 KiloWatt = Union[int, float]
+Ampere = Union[int, float]

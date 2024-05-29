@@ -3,6 +3,10 @@ from simulator_types import Percentage, Watt, Volt
 from utils import calculate_watts, uuid
 
 
+class LoadError(Exception):
+    """"""
+    pass
+
 class Battery:
     """A battery class."""
     
@@ -10,6 +14,7 @@ class Battery:
         self._id = uuid('BATTERY')
         self._volts: Volt = volts
         self._state_of_charge: Percentage = 0.01
+        self._minimum_power: Watt = 0
         self._max_charge_rate: Watt = 1000
         self._max_discharge_rate: Watt = 1000
         self._depth_of_charge: Percentage = 0.50
@@ -30,7 +35,7 @@ class Battery:
         return state
     
     def charge(self, power: Watt):
-        """Add to available volts."""
+        """Add power to battery."""
         if power > self._max_charge_rate:
             power = self._max_charge_rate     # limit power to max rate
         if self._available_power + power <= self._capacity:
@@ -38,8 +43,13 @@ class Battery:
         self._state_of_charge = self._available_power / self._capacity   
         
     def discharge(self, power: Watt):
-        """"""
-    
+        """Discharge power from battery."""
+        if power > self._max_discharge_rate:
+            raise LoadError('Requested power exceeds maximum discharge rate.')
+        if self._available_power - power > self._minimum_power:
+            self._available_power -= power
+        self._state_of_charge = self._available_power / self._capacity
+            
     def json(self):     # self.status() is used for internal use where as json is for ui
         """Return json representation of battery."""
         return {
@@ -62,6 +72,7 @@ class BatteryArray:
         self._capacity: Volt = 0
         self._voltage: Volt = 0
         self._avg_state_of_charge = 0.0
+        self._total_available_power: Watt = 0
         self._connection_type: str = connection_type
         self._time_series = []
         
@@ -99,22 +110,37 @@ class BatteryArray:
     def charge(self, power: Watt):
         """Charge connected batteries, return state"""
         self._distribute_charge(power)
+        
+    def discharge(self, power: Watt):
+        """Discharge power from connected batteries."""
+        try:
+            self._distribute_discharge(power)
+            return power
+        except LoadError:
+            return 0
     
     def _distribute_charge(self, power: Watt):
         """Distribute charge equally amongst connected batteries."""
         power_per_battery = power / len(self._battery_array)
         [battery.charge(power_per_battery) for battery in self._battery_array]
-        
+    
+    def _distribute_discharge(self, power: Watt):
+        """Distribute discharge equally amongst connected batteries."""
+        power_per_battery = power / len(self._battery_array)
+        [battery.discharge(power_per_battery) for battery in self._battery_array]
+
     def json(self):
         """Return json representation of battery array."""
         battery_details = [battery.status() for battery in self._battery_array]
         avg_voltage = sum([battery['available_power'] for battery in battery_details]) / len(battery_details)
         avg_state_of_charge = sum([battery['state_of_charge'] for battery in battery_details]) / len(battery_details)
+        total_power = sum([battery['available_power'] for battery in battery_details])
+        self._total_available_power = total_power
         self._avg_state_of_charge = avg_state_of_charge
         self._voltage = avg_voltage
         return {
             'array_id': self._id,
-            'voltage': avg_voltage,
+            'available_power': avg_voltage,
             'batteries': battery_details,
             'avg_state_of_charge': avg_state_of_charge
         }

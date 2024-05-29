@@ -33,3 +33,7 @@ def randomise(value, variance: Percentage = 0.3):
 class PhotoVoltaicError(Exception):
     """Indicates a PV misconfiguration."""
     pass
+
+class InsufficientPowerError(Exception):
+    """Thrown on inverter load misconfigurations."""
+    pass

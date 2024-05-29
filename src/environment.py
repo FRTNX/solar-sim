@@ -17,7 +17,7 @@ class Environment:
         self._min_solar_irradiance: Watt = 0
         self._max_solar_irradiance: Watt = 2000
         self._temperature: Celcius = 0
-        self._minumum_temperature: Celcius = 9
+        self._minumum_temperature: Celcius = 4
         self._maximum_temperature: Celcius = 35
         # todo: factor in real time weather data based on location
         
@@ -63,7 +63,7 @@ class Environment:
             time = hour + (minute / 60)
         fraction_of_day = time / 12
         self._temperature = self._minumum_temperature + ((self._maximum_temperature - \
-            self._minumum_temperature) * fraction_of_day)
+            self._minumum_temperature) * fraction_of_day) 
         
     def _invert_time(self, hour: int, minute: int) -> List[int]:
         """Invert time values. Creates time parabola."""

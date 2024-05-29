@@ -49,7 +49,7 @@ class IncomingSolarPanel(TypedDict):
     temp_coefficient: Union[int, float]
     area: Union[int, float]
 
-@freeze_time('May 21, 2024', auto_tick_seconds=280)   # 1 second real time = 30 min sim time
+@freeze_time('May 21, 2024', auto_tick_seconds=300)   # 1 second real time = 30 min sim time
 def simulated_time(environment: Environment):
     """Updates an environment's time value based on specified interval."""
     while environment._active:
