@@ -65,8 +65,12 @@ class SolarPanel:
             temperature_difference = self._current_temperature - self._optimal_temperature
             if self._cooling_system._current_output < temperature_difference:
                 if self._cooling_system._current_output < self._cooling_system._max_output:
-                    self._cooling_system._current_output += 1
+                    self._cooling_system._current_output += 1   # increase cooling system output by 1℃
+            else:
+                if self._cooling_system._current_output > 0:
+                    self._cooling_system._current_output -= 1   # decrease cooling system output by 1℃
             return self._cooling_system.yield_(self._id)
+        self._cooling_system.yield_(self._id, reset=True)
         return random.uniform(0, 3)
 
     def json(self):

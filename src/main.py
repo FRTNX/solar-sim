@@ -49,7 +49,7 @@ class IncomingSolarPanel(TypedDict):
     temp_coefficient: Union[int, float]
     area: Union[int, float]
 
-@freeze_time('May 21, 2024', auto_tick_seconds=300)   # 1 second real time = 30 min sim time
+@freeze_time('May 21, 2024 04:00', auto_tick_seconds=300)   # 1 second real time = 30 min sim time
 def simulated_time(environment: Environment):
     """Updates an environment's time value based on specified interval."""
     while environment._active:
@@ -92,7 +92,7 @@ def create_default_sim():
             },
             'temp_coefficient': 0.02,
             'area': 3
-        }) for i in range(2)]
+        }) for i in range(4)]
     batteries = [Battery(volts=12, amps=100) for battery in range(2)]
     [solar_array.add(panel) for panel in panels]
     [battery_array.add(battery) for battery in batteries]
@@ -178,6 +178,7 @@ def add_panel(data: IncomingSolarPanel):
             'area': data['area']
         })
         system._panels.add(panel)
+        system.connect_panel_cooling(panel._id)
         return { 'result': 'SUCCESS' }
     except Exception as e:
         return { 'error': str(e) }

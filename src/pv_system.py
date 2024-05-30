@@ -51,18 +51,21 @@ class PhotoVoltaicSystem:
         """Return most recent state."""
         if len(self._time_series) > 0:
             return self._time_series[-1]
-        return None
+        return None    
     
-    def add_cooling_system(self, coolingSystem):
-        """Add a cooling system for the solar array."""
-        
+    def connect_panel_cooling(self, panel_id):
+        """Called after a new solar panel is added to the systems solar array."""
+        [
+            panel._cooling_system.add_power_source(self._inverter) for panel in self._panels 
+            if panel._id == panel_id
+        ]
     
     def _update(self):
         """Get current readings from solar and battery arrays."""
         while self._active:
-            self._charge_battery_array()                            # send output from solar array to battery array
             panel_details = self._panels.json()
             battery_details = self._batteries.json()
+            self._batteries.charge(panel_details['total_output'])   # send output from solar array to battery array
             self._total_solar_output = panel_details['total_output']
             self._total_available_volts = battery_details['available_power']
             state = {
@@ -79,10 +82,6 @@ class PhotoVoltaicSystem:
             else:
                 self._iterations += 1
                 time.sleep(self._update_interval)
-            
-    def _charge_battery_array(self):
-        panel_details = self._panels.json()
-        self._batteries.charge(panel_details['total_output'])
 
     def json(self):
         """Return json representation of PV system."""
@@ -96,6 +95,11 @@ class PhotoVoltaicSystem:
             'solar_irradiance': self._environment.solar_irradiance(),
             'temperature': self._environment.temperature,
             'time_series': self._time_series,
+            'inverter': {
+                'max_output': self._inverter._max_output,
+                'output': self._inverter._output_power,
+                'time_series': self._inverter._time_series
+            },
             'panels': [
                 {
                     'panel_id': panel._id,
@@ -116,5 +120,14 @@ class PhotoVoltaicSystem:
                     'time_series': battery._time_series
                 }
                 for battery in self._batteries
+            ],
+            'cooling_systems': [
+                {
+                    'panel_id': panel._id,
+                    'max_output': panel._cooling_system._max_output,
+                    'output': panel._cooling_system._current_output,
+                    'time_series': panel._cooling_system._time_series
+                }
+                for panel in self._panels
             ]
         }
