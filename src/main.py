@@ -48,6 +48,10 @@ class IncomingSolarPanel(TypedDict):
     stc: IncomingSTC
     temp_coefficient: Union[int, float]
     area: Union[int, float]
+    
+class CoolingSystemUpdate(TypedDict):
+    system_id: str
+    active: bool
 
 @freeze_time('May 21, 2024 04:00', auto_tick_seconds=300)   # 1 second real time = 30 min sim time
 def simulated_time(environment: Environment):
@@ -233,5 +237,19 @@ def remove_battery(system_id: str, battery_id: str):
     try:
         system: PhotoVoltaicSystem = get_pv_system(system_id)
         return system._batteries.remove(battery_id)
+    except Exception as e:
+        return { 'error': str(e) }
+
+
+@app.put('/pv/cooling/update')
+def update_cooling_system(data: CoolingSystemUpdate):
+    """Turn a cooling system on or off."""
+    try:
+        system: PhotoVoltaicSystem = get_pv_system(data['system_id'])
+        if data['active'] == True:
+            system.activate_panel_cooling()
+        if data['active'] == False:
+            system.deactivate_panel_cooling()
+        return { 'result': 'SUCCESS' }
     except Exception as e:
         return { 'error': str(e) }

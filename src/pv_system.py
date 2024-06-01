@@ -23,9 +23,10 @@ class PhotoVoltaicSystem:
         self._inverter: Inverter = Inverter()
         self._total_available_volts: Volt = 0
         self._total_solar_output: Watt = 0
+        self._panel_cooling: bool = True
         self._active: bool = False
         self._update_interval: int = 1
-        self._max_iterations = 300
+        self._max_iterations = 150
         self._iterations = 0
         self._time_series: List[dict] = []
         
@@ -59,7 +60,21 @@ class PhotoVoltaicSystem:
             panel._cooling_system.add_power_source(self._inverter) for panel in self._panels 
             if panel._id == panel_id
         ]
-    
+        
+    def activate_panel_cooling(self):
+        """Turn on panel cooling for all panels in system."""
+        [
+            panel._cooling_system.start() for panel in self._panels 
+        ]
+        self._panel_cooling = True
+        
+    def deactivate_panel_cooling(self):
+        """Turn off panel cooling for all panels in system."""
+        [
+            panel._cooling_system.stop() for panel in self._panels 
+        ]
+        self._panel_cooling = False
+
     def _update(self):
         """Get current readings from solar and battery arrays."""
         while self._active:
@@ -94,6 +109,7 @@ class PhotoVoltaicSystem:
             'battery_array_soc' : self._batteries._avg_state_of_charge,
             'solar_irradiance': self._environment.solar_irradiance(),
             'temperature': self._environment.temperature,
+            'panel_cooling': self._panel_cooling,
             'time_series': self._time_series,
             'inverter': {
                 'max_output': self._inverter._max_output,

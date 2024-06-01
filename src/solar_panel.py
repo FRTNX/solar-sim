@@ -61,7 +61,7 @@ class SolarPanel:
         
     def _cooling_factors(self):
         """Returns the temperature drop accounted for by water and air conditioners."""
-        if self._current_temperature > self._optimal_temperature:
+        if self._current_temperature > self._optimal_temperature and self._cooling_system._active:
             temperature_difference = self._current_temperature - self._optimal_temperature
             if self._cooling_system._current_output < temperature_difference:
                 if self._cooling_system._current_output < self._cooling_system._max_output:

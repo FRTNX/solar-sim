@@ -16,8 +16,14 @@ class CoolingSystem:
         self._target_temparature: Celcius = 0
         self._current_output: Celcius = 0                   # controlled by corresponding solar panel
         self._power_source: Inverter = None
-        self._interval: int = 2
+        self._active: bool = True
         self._time_series: List[dict] = []
+        
+    def start(self):
+        self._active = True
+        
+    def stop(self):
+        self._active = False
         
     def add_power_source(self, power_source: Inverter):
         """Connect cooling system to power source."""
