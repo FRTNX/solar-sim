@@ -26,7 +26,7 @@ class PhotoVoltaicSystem:
         self._panel_cooling: bool = True
         self._active: bool = False
         self._update_interval: int = 1
-        self._max_iterations = 150
+        self._max_iterations = 299
         self._iterations = 0
         self._time_series: List[dict] = []
         
@@ -109,7 +109,9 @@ class PhotoVoltaicSystem:
             'battery_array_soc' : self._batteries._avg_state_of_charge,
             'solar_irradiance': self._environment.solar_irradiance(),
             'temperature': self._environment.temperature,
+            'max_solar_output': sum([panel._power_rating for panel in self._panels]) + (60 * len(self._panels)),
             'panel_cooling': self._panel_cooling,
+            'aggregated_solar_output': sum([cycle['solar_array_output'] for cycle in self._time_series]),
             'time_series': self._time_series,
             'inverter': {
                 'max_output': self._inverter._max_output,
