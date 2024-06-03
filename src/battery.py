@@ -98,7 +98,7 @@ class BatteryArray:
         
     def remove(self, battery_id):
         for battery in self._battery_array:
-            if battery['_id'] == battery_id:
+            if battery._id == battery_id:
                 self._battery_array.pop(self._battery_array.index(battery))
                 return { 'result': 'SUCCESS' }
         raise ValueError('BATTERY_NOT_FOUND')

@@ -121,7 +121,8 @@ class SolarArray:
     def remove(self, panel_id: str):
         """Remove a solar panel from the array."""
         for panel in self._panel_array:
-            if panel['_id'] == panel_id:
+            if panel._id == panel_id:
+                panel._cooling_system.yield_(panel._id, reset=True)    # reset cooling system
                 self._panel_array.pop(self._panel_array.index(panel))
                 return { 'result': 'SUCCESS' }
         raise ValueError('PANEL_NOT_FOUND')

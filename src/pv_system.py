@@ -60,6 +60,8 @@ class PhotoVoltaicSystem:
             panel._cooling_system.add_power_source(self._inverter) for panel in self._panels 
             if panel._id == panel_id
         ]
+        if not self._panel_cooling:                      # ensure newly added panels conform to existing settings
+            self.deactivate_panel_cooling()
         
     def activate_panel_cooling(self):
         """Turn on panel cooling for all panels in system."""

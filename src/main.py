@@ -163,7 +163,7 @@ def get_panels(system_id: str):
         return { 'error': str(e) }
 
 
-@app.post('/pv/panel/add')
+@app.put('/pv/panel/add')
 def add_panel(data: IncomingSolarPanel):
     """Add panel to solar array."""
     try:
@@ -220,7 +220,7 @@ def get_batteries():
         return { 'error': str(e) }
 
 
-@app.post('/pv/battery/add')
+@app.put('/pv/battery/add')
 def add_battery(data: IncomingBattery):
     """Add battery to target PV system."""
     try:
