@@ -53,6 +53,18 @@ class CoolingSystemUpdate(TypedDict):
     system_id: str
     active: bool
 
+class ClientMetadata(TypedDict):
+    system_id: str
+    system: int
+    inverter: int
+    panels: dict
+    batteries: dict
+    cooling_systems: dict
+
+class IncomingIterations(TypedDict):
+    system_id: str
+    value: int
+
 @freeze_time('May 21, 2024 04:00', auto_tick_seconds=300)   # 1 second real time = 30 min sim time
 def simulated_time(environment: Environment):
     """Updates an environment's time value based on specified interval."""
@@ -108,14 +120,22 @@ def create_default_sim():
     return { 'result': system.json() }
 
 
-@app.get('/pv/system')
-def pv_system(system_id: str):
+@app.put('/pv/system')   # method changed from get to put to support request body
+def pv_system(data: ClientMetadata):
     """Get PV system by _id."""
     try:
-        return { 'result': get_pv_system(system_id).json() }
+        return { 'result': get_pv_system(data['system_id']).json(metadata=data) }
     except Exception as e:
         return { 'error': str(e) }
 
+@app.put('/pv/system/iterations')
+def pv_iterations(data: IncomingIterations):
+    try:
+        system = get_pv_system(data['system_id'])
+        system.set_max_iteration(data['value'])
+        return { 'result': 'SUCCESS' }
+    except Exception as e:
+        return { 'error': str(e) }
 
 @app.get('/pv/start')
 def start_pv_system(system_id: str):

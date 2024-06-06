@@ -26,7 +26,8 @@ class PhotoVoltaicSystem:
         self._panel_cooling: bool = True
         self._active: bool = False
         self._update_interval: int = 1
-        self._max_iterations = 299
+        self._iterations_per_day = 84
+        self._max_iterations = 252                                    # (84 * 3) days
         self._iterations = 0
         self._time_series: List[dict] = []
         
@@ -54,6 +55,14 @@ class PhotoVoltaicSystem:
             return self._time_series[-1]
         return None    
     
+    def set_max_iteration(self, value: int):
+        """Set max iterations. Gives the client control of simulation length.
+        
+        value: integer value representing the number of days to run the sim.
+        """
+        # todo: make sure value is greater than current iterations
+        self._max_iterations = value * self._iterations_per_day
+
     def connect_panel_cooling(self, panel_id):
         """Called after a new solar panel is added to the systems solar array."""
         [
@@ -82,7 +91,7 @@ class PhotoVoltaicSystem:
         while self._active:
             panel_details = self._panels.json()
             battery_details = self._batteries.json()
-            self._batteries.charge(panel_details['total_output'])   # send output from solar array to battery array
+            self._batteries.charge(panel_details['total_output']) # send output from solar array to battery array
             self._total_solar_output = panel_details['total_output']
             self._total_available_volts = battery_details['available_power']
             state = {
@@ -100,11 +109,20 @@ class PhotoVoltaicSystem:
                 self._iterations += 1
                 time.sleep(self._update_interval)
 
-    def json(self):
-        """Return json representation of PV system."""
+    def json(self, metadata=None):
+        """Return json representation of PV system. The metadata argument helps us return only
+        data that the client does not already have.
+        """
+        print('got metadata: ', metadata)
+        # if metadata and metadata['system'] == 0:
+        #     metadata = None
+        metadata = None                                 # disable feature fn
+        
         return {
             'system_id': self._id,
             'active': self._active,
+            'current_iteration': self._iterations,
+            'max_iteration': self._max_iterations,
             'datetime': self._environment.current_time,
             'total_solar_output': self._total_solar_output,
             'battery_array_power': self._total_available_volts,
@@ -114,11 +132,11 @@ class PhotoVoltaicSystem:
             'max_solar_output': sum([panel._power_rating for panel in self._panels]) + (60 * len(self._panels)),
             'panel_cooling': self._panel_cooling,
             'aggregated_solar_output': sum([cycle['solar_array_output'] for cycle in self._time_series]),
-            'time_series': self._time_series,
+            'time_series': self._time_series[metadata['system']:]  if metadata else self._time_series,
             'inverter': {
                 'max_output': self._inverter._max_output,
                 'output': self._inverter._output_power,
-                'time_series': self._inverter._time_series
+                'time_series': self._inverter._time_series[metadata['inverter']:] if metadata else self._inverter._time_series
             },
             'panels': [
                 {
@@ -127,7 +145,7 @@ class PhotoVoltaicSystem:
                     'output': panel._current_output,
                     'temperature': panel._current_temperature,
                     'efficiency': panel._calculate_efficiency(),
-                    'time_series': panel._time_series
+                    'time_series': panel._time_series[metadata['panels'][panel._id]:] if metadata else panel._time_series
                 }
                 for panel in self._panels
             ],
@@ -137,7 +155,7 @@ class PhotoVoltaicSystem:
                     'capacity': battery._volts,
                     'amps': battery._amperes,
                     'soc': battery._state_of_charge,
-                    'time_series': battery._time_series
+                    'time_series': battery._time_series[metadata['batteries'][battery._id]:] if metadata else battery._time_series
                 }
                 for battery in self._batteries
             ],
@@ -146,7 +164,7 @@ class PhotoVoltaicSystem:
                     'panel_id': panel._id,
                     'max_output': panel._cooling_system._max_output,
                     'output': panel._cooling_system._current_output,
-                    'time_series': panel._cooling_system._time_series
+                    'time_series': panel._cooling_system._time_series[metadata['cooling_systems'][panel._id]:] if metadata else panel._cooling_system._time_series
                 }
                 for panel in self._panels
             ]
