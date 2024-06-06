@@ -7,13 +7,13 @@ Live demo: https://solar-ui.vercel.app
 ## How To Run Current Code
 ### As of June 6, 2024
 
-* If you're on Linux ignore the fnm related commands and just ensure you have Nodejs 18+ and Python 3.10+ installed.
+* If you're on Linux ignore the `fnm` related commands and just ensure you have Nodejs 18+ and Python 3.10+ installed.
 
 #### Getting the Code
 
 First clone the server code by running the following on a Linux terminal or Windows PowerShell:
 ```
-$ git clone https://github.com/FRTNX/solar-sim
+git clone https://github.com/FRTNX/solar-sim
 ```
 
 Then clone the client code with:
@@ -27,9 +27,9 @@ Specifications
  * Node.js version 18.13.0 (or higher)
  * npm 8.19.3
 
-Setting up the client typically requires just two commands, but on Windows this can be tricky due to `npm` environment variables not being set automatically. Nevertheless, below is a walk through on how to get it done.
+Setting up the client typically requires just two commands, but on Windows this can be slightly complicated due to `npm` environment variables not being set automatically. Nevertheless, below is a walk through on how to get it done.
 
-First, move to the client code's directory with:
+First navigate to the client code's directory with:
 ```
 cd solar-ui
 ```
@@ -39,11 +39,11 @@ Then check that npm is installed correctly with:
 npm --version
 ```
 
-If you're on Windows and `npm` isn't recognised even though you've previously installed it, check that the fnm environment variables are set correctly with:
+If you're on Windows and `npm` isn't recognised even though you've previously installed it, check that the `fnm` environment variables are set correctly with:
 ```
 fnm env
 ```
-If the output of the above command is multiple lines starting with the keyword `SET`, copy all the output starting with `SET` by marking it all and pressing Ctrl+C, then paste it into the terminal and press enter. Now verifyy that the `npm` command works with:
+If the output of the above command is multiple lines starting with the keyword `SET`, copy all the output starting with `SET` by marking it all and pressing Ctrl+C, then paste it into the terminal and press enter. Now verify that the `npm` command works with:
 ```
 npm --version
 ```
@@ -68,7 +68,7 @@ Specifications:
 
 Setting up the server is simple, as Windows does a good job on setting Python environment variables.
 
-Open a new terminal/PowerShell window, then move the server code's directory with:
+Open a new terminal/PowerShell window, then navigate to the server code's directory with:
 ```
 cd solar-sim
 ```
