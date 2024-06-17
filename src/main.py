@@ -208,8 +208,9 @@ def add_panel(data: IncomingSolarPanel):
             'temp_coefficient': data['temp_coefficient'],
             'area': data['area']
         })
-        system._metadata['panels'][panel._id] = 0             # update metadata
-        system._metadata['cooling_systems'][panel._id] = 0
+        if system._metadata:
+            system._metadata['panels'][panel._id] = 0             # update metadata
+            system._metadata['cooling_systems'][panel._id] = 0
         system._panels.add(panel)
         system.connect_panel_cooling(panel._id)
         return { 'result': 'SUCCESS' }
