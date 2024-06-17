@@ -25,6 +25,7 @@ class Battery:
 
     def status(self):
         state = {
+            'index': len(self._time_series),
             'battery_id': self._id,
             'capacity': self._capacity,
             'state_of_charge': self._state_of_charge,

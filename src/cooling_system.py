@@ -34,11 +34,23 @@ class CoolingSystem:
         try:
             if reset:
                 self._current_output = 0
+
             required_power = self._watts_per_degree * self._current_output
-            power = self._power_source.get_power(self._id, required_power)
-            self._time_series.append({ 'output': self._current_output, 'target': panel_id })
+            self._power_source.get_power(self._id, required_power)
+            
+            self._time_series.append({
+                'index': len(self._time_series),
+                'output': self._current_output,
+                'target': panel_id
+            })
             return self._current_output
+        
         except InsufficientPowerError:
-            self._time_series.append({ 'output': 0, 'target': panel_id })
+            self._time_series.append({
+                'index': len(self._time_series),
+                'output': 0,
+                'target': panel_id
+            })
+            
             return 0                                        # no air-conditioning for you
              

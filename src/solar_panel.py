@@ -1,6 +1,6 @@
 import random
 
-from typing import List
+from typing import List, Union
 from simulator_types import Celcius, Percentage, Watt
 
 from cooling_system import CoolingSystem
@@ -28,6 +28,7 @@ class SolarPanel:
         """Return panel status."""
         self._current_output = self._get_power_output()   # updates temperature, etc
         state = {
+            'index': len(self._time_series),
             'panel_id': self._id,
             'power_output': self._current_output,
             'panel_temperature': self._current_temperature
@@ -59,8 +60,8 @@ class SolarPanel:
         self._current_temperature = environment_temp - self._cooling_factors()
         return self._current_temperature
         
-    def _cooling_factors(self):
-        """Returns the temperature drop accounted for by water and air conditioners."""
+    def _cooling_factors(self) -> Union[int, float]:
+        """Returns the temperature drop accounted for by cooling systems and heat loss."""
         if self._current_temperature > self._optimal_temperature and self._cooling_system._active:
             temperature_difference = self._current_temperature - self._optimal_temperature
             if self._cooling_system._current_output < temperature_difference:
@@ -97,7 +98,6 @@ class SolarArray:
         self._array_temperature: Celcius = 0
         self._total_output: Watt = 0
         self._cooling_system = None
-        self._time_series = []
 
     def __iter__(self):
         for panel in self._panel_array:

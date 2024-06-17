@@ -54,12 +54,12 @@ class Inverter:
         if self._battery_array._total_available_power > requested_power:
             self._appliances[appliance_id] = { 'output': power }      # add or update appliance power requirements
             self._output_power = requested_power
-            state = { 'output': self._output_power }
+            state = { 'index': len(self._time_series), 'output': self._output_power }
             self._time_series.append(state)
             return self._battery_array.discharge(power)
         
         # requested power is more than available power
-        state = { 'output': 0 }
+        state = { 'index': len(self._time_series), 'output': 0 }
         self._time_series.append(state)
         self._load_error = True
         raise InsufficientPowerError('Not enough power in batteries.')

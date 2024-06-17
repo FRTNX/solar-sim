@@ -15,6 +15,8 @@ import fastapi
 
 from starlette.middleware.cors import CORSMiddleware
 
+environment = Environment()
+
 app = fastapi.FastAPI()
 
 app.add_middleware(
@@ -24,7 +26,6 @@ app.add_middleware(
     allow_methods=['*'],
     allow_headers=['*']
 )
-
 
 ACTIVE_SIMS: List[PhotoVoltaicSystem] = []
 
@@ -60,6 +61,9 @@ class ClientMetadata(TypedDict):
     panels: dict
     batteries: dict
     cooling_systems: dict
+    
+class SystemDetails(TypedDict):
+    system_id: str
 
 class IncomingIterations(TypedDict):
     system_id: str
@@ -72,6 +76,9 @@ def simulated_time(environment: Environment):
         environment.set_time(datetime.now())
         time.sleep(1)
 
+sim_time_thread = threading.Thread(target=simulated_time, args=(environment,))
+sim_time_thread.start()
+
 
 def get_pv_system(system_id: str):
     """Get PhotoVoltaicSystem by _id."""
@@ -83,7 +90,7 @@ def get_pv_system(system_id: str):
 
 @app.get('/pv/init')
 def create_env():
-    environment = Environment()                    # initialise environment
+    # environment = Environment()                    # initialise environment
     solar_array = SolarArray()                     # create empty solar array
     battery_array = BatteryArray()                 # create empty battery array
     system = PhotoVoltaicSystem(environment=environment, panels=solar_array, batteries=battery_array)
@@ -92,8 +99,8 @@ def create_env():
 
 @app.get('/pv/init/default')
 def create_default_sim():
-    """Initialise and start default simulation: environment, a panel and a battery."""
-    environment = Environment()
+    """Initialise and start default simulation."""
+    # environment = Environment()
     solar_array = SolarArray()
     battery_array = BatteryArray()
     panels = [SolarPanel({
@@ -114,17 +121,17 @@ def create_default_sim():
     [battery_array.add(battery) for battery in batteries]
     system = PhotoVoltaicSystem(environment=environment, panels=solar_array, batteries=battery_array)
     ACTIVE_SIMS.append(system)
-    sim_time_thread = threading.Thread(target=simulated_time, args=(environment,))
-    sim_time_thread.start()
+    # sim_time_thread = threading.Thread(target=simulated_time, args=(environment,))
+    # sim_time_thread.start()
     system.start()
     return { 'result': system.json() }
 
 
 @app.put('/pv/system')   # method changed from get to put to support request body
-def pv_system(data: ClientMetadata):
+def pv_system(data: SystemDetails):
     """Get PV system by _id."""
     try:
-        return { 'result': get_pv_system(data['system_id']).json(metadata=data) }
+        return { 'result': get_pv_system(data['system_id']).json() }
     except Exception as e:
         return { 'error': str(e) }
 
@@ -142,8 +149,8 @@ def start_pv_system(system_id: str):
     """Start target PV system."""
     try:
         system: PhotoVoltaicSystem = get_pv_system(system_id)
-        sim_time_thread = threading.Thread(target=simulated_time, args=(system._environment,))
-        sim_time_thread.start()
+        # sim_time_thread = threading.Thread(target=simulated_time, args=(system._environment,))
+        # sim_time_thread.start()
         system.start()
         return { 'result': 'SUCCESS' }
     except Exception as e:
@@ -156,7 +163,7 @@ def stop_pv_system(system_id: str):
     try:
         system: PhotoVoltaicSystem = get_pv_system(system_id)
         system.stop()
-        system._environment.stop()
+        # system._environment.stop()
         return { 'result': 'SUCCESS' }
     except Exception as e:
         return { 'error': str(e) }
@@ -201,6 +208,8 @@ def add_panel(data: IncomingSolarPanel):
             'temp_coefficient': data['temp_coefficient'],
             'area': data['area']
         })
+        system._metadata['panels'][panel._id] = 0             # update metadata
+        system._metadata['cooling_systems'][panel._id] = 0
         system._panels.add(panel)
         system.connect_panel_cooling(panel._id)
         return { 'result': 'SUCCESS' }
@@ -246,7 +255,10 @@ def add_battery(data: IncomingBattery):
     try:
         system: PhotoVoltaicSystem = get_pv_system(data['system_id'])
         battery = Battery(volts=data['volts'], amps=data['amps'])
-        return system._batteries.add(battery)
+        system._metadata['batteries'][battery._id] = 0
+        system._batteries.add(battery)
+        print('post battery meta:', system._metadata)
+        return { 'result': 'SUCCESS' }
     except Exception as e:
         return { 'error': str(e) }
 
@@ -270,6 +282,16 @@ def update_cooling_system(data: CoolingSystemUpdate):
             system.activate_panel_cooling()
         if data['active'] == False:
             system.deactivate_panel_cooling()
+        return { 'result': 'SUCCESS' }
+    except Exception as e:
+        return { 'error': str(e) }
+
+@app.put('/pv/metadata/update')
+def update_metadata(data: ClientMetadata):
+    """Capture the last recieved data from the client."""
+    try:
+        system: PhotoVoltaicSystem = get_pv_system(data['system_id'])
+        system.update_metadata(data)
         return { 'result': 'SUCCESS' }
     except Exception as e:
         return { 'error': str(e) }
