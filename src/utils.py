@@ -8,7 +8,6 @@ def calculate_volts(watts, amps):
     """Calculate voltage from watts and amperes."""
     return watts / amps
 
-
 def calculate_watts(volts, amps):
     """Calculate watts from voltage and amperes."""
     return volts * amps
@@ -22,7 +21,7 @@ def uuid(prefix: str='xxxxxxxx'):
     return re.sub('x', lambda m: secrets.choice('0123456789abcdef'),
                   f'{prefix}-{first_block}-xxxx-xxxx-xxxx-xxxxxxxx')
 
-def randomise(value, variance: Percentage = 0.3):
+def variation(value, variance: Percentage = 0.3):
     """Create realistic variance in output values."""
     if value > 10:
         decimal = random.randrange(0, 99) * 0.01
@@ -35,5 +34,5 @@ class PhotoVoltaicError(Exception):
     pass
 
 class InsufficientPowerError(Exception):
-    """Thrown on inverter load misconfigurations."""
+    """Thrown on inverter load misconfiguration."""
     pass

@@ -5,7 +5,7 @@ from simulator_types import Celcius, Percentage, Watt
 
 from cooling_system import CoolingSystem
 from environment import Environment
-from utils import uuid, randomise
+from utils import uuid, variation
 
 
 class SolarPanel:
@@ -42,7 +42,7 @@ class SolarPanel:
         """
         solar_irradiance = self._environment.solar_irradiance() * self._area
         efficiency = self._calculate_efficiency()
-        return randomise((solar_irradiance * efficiency) / 3)
+        return variation((solar_irradiance * efficiency) / 3)
         
     def _calculate_efficiency(self):
         """Calculate the panels efficiency based on its temperature."""

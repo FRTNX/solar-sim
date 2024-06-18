@@ -26,7 +26,6 @@ def get_system_details(system_id: str):
     )
     return response.json()
 
-
 # todo: add assertions
 if __name__ == '__main__':
     # initialise new simulation

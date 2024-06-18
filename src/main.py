@@ -27,7 +27,7 @@ app.add_middleware(
     allow_headers=['*']
 )
 
-ACTIVE_SIMS: List[PhotoVoltaicSystem] = []
+ACTIVE_SIMULATIONS: List[PhotoVoltaicSystem] = []
 
 
 class temperatureDict(TypedDict):
@@ -69,7 +69,7 @@ class IncomingIterations(TypedDict):
     system_id: str
     value: int
 
-@freeze_time('May 21, 2024 04:00', auto_tick_seconds=300)   # 1 second real time = 30 min sim time
+@freeze_time('May 21, 2024 04:00', auto_tick_seconds=300)
 def simulated_time(environment: Environment):
     """Updates an environment's time value based on specified interval."""
     while environment._active:
@@ -79,28 +79,24 @@ def simulated_time(environment: Environment):
 sim_time_thread = threading.Thread(target=simulated_time, args=(environment,))
 sim_time_thread.start()
 
-
 def get_pv_system(system_id: str):
     """Get PhotoVoltaicSystem by _id."""
-    for system in ACTIVE_SIMS:
+    for system in ACTIVE_SIMULATIONS:
         if system._id == system_id:
             return system
     raise ValueError('PVS_NOT_FOUND')
 
-
 @app.get('/pv/init')
 def create_env():
-    # environment = Environment()                    # initialise environment
     solar_array = SolarArray()                     # create empty solar array
     battery_array = BatteryArray()                 # create empty battery array
     system = PhotoVoltaicSystem(environment=environment, panels=solar_array, batteries=battery_array)
-    ACTIVE_SIMS.append(system)
+    ACTIVE_SIMULATIONS.append(system)
     return { 'result': system.json() }
 
 @app.get('/pv/init/default')
 def create_default_sim():
     """Initialise and start default simulation."""
-    # environment = Environment()
     solar_array = SolarArray()
     battery_array = BatteryArray()
     panels = [SolarPanel({
@@ -120,12 +116,9 @@ def create_default_sim():
     [solar_array.add(panel) for panel in panels]
     [battery_array.add(battery) for battery in batteries]
     system = PhotoVoltaicSystem(environment=environment, panels=solar_array, batteries=battery_array)
-    ACTIVE_SIMS.append(system)
-    # sim_time_thread = threading.Thread(target=simulated_time, args=(environment,))
-    # sim_time_thread.start()
+    ACTIVE_SIMULATIONS.append(system)
     system.start()
     return { 'result': system.json() }
-
 
 @app.put('/pv/system')   # method changed from get to put to support request body
 def pv_system(data: SystemDetails):
@@ -149,13 +142,10 @@ def start_pv_system(system_id: str):
     """Start target PV system."""
     try:
         system: PhotoVoltaicSystem = get_pv_system(system_id)
-        # sim_time_thread = threading.Thread(target=simulated_time, args=(system._environment,))
-        # sim_time_thread.start()
         system.start()
         return { 'result': 'SUCCESS' }
     except Exception as e:
         return { 'error': str(e) }
-
     
 @app.get('/pv/stop')
 def stop_pv_system(system_id: str):
@@ -163,11 +153,9 @@ def stop_pv_system(system_id: str):
     try:
         system: PhotoVoltaicSystem = get_pv_system(system_id)
         system.stop()
-        # system._environment.stop()
         return { 'result': 'SUCCESS' }
     except Exception as e:
         return { 'error': str(e) }
-
 
 @app.get('/pv/panel')
 def get_panel(system_id: str, panel_id: str):
@@ -179,7 +167,6 @@ def get_panel(system_id: str, panel_id: str):
     except Exception as e:
         return { 'error': str(e) }
 
-
 @app.get('/pv/panels')
 def get_panels(system_id: str):
     """Get panels connected to a specified pv system."""
@@ -188,7 +175,6 @@ def get_panels(system_id: str):
         return { 'result': [panel.json() for panel in system._panels] }
     except Exception as e:
         return { 'error': str(e) }
-
 
 @app.put('/pv/panel/add')
 def add_panel(data: IncomingSolarPanel):
@@ -217,7 +203,6 @@ def add_panel(data: IncomingSolarPanel):
     except Exception as e:
         return { 'error': str(e) }
 
-
 @app.delete('/pv/panel/remove')
 def remove_panel(system_id: str, panel_id: str):
     """Remove panel from target PV system."""
@@ -226,7 +211,6 @@ def remove_panel(system_id: str, panel_id: str):
         return system._panels.remove(panel_id)
     except Exception as e:
         return { 'error': str(e) }    
-
 
 @app.get('/pv/battery')
 def get_battery(system_id: str, battery_id: str):
@@ -238,7 +222,6 @@ def get_battery(system_id: str, battery_id: str):
     except Exception as e:
         return { 'error': str(e) }
 
-
 @app.get('/pv/batteries')
 def get_batteries():
     """Get batteries connected to target PV system."""
@@ -248,7 +231,6 @@ def get_batteries():
         return { 'result': [battery.json() for battery in system._batteries] }
     except Exception as e:
         return { 'error': str(e) }
-
 
 @app.put('/pv/battery/add')
 def add_battery(data: IncomingBattery):
@@ -263,7 +245,6 @@ def add_battery(data: IncomingBattery):
     except Exception as e:
         return { 'error': str(e) }
 
-
 @app.delete('/pv/battery/remove')
 def remove_battery(system_id: str, battery_id: str):
     """Add battery to target PV system."""
@@ -272,7 +253,6 @@ def remove_battery(system_id: str, battery_id: str):
         return system._batteries.remove(battery_id)
     except Exception as e:
         return { 'error': str(e) }
-
 
 @app.put('/pv/cooling/update')
 def update_cooling_system(data: CoolingSystemUpdate):

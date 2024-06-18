@@ -4,7 +4,7 @@ from utils import calculate_watts, uuid
 
 
 class LoadError(Exception):
-    """"""
+    """Raised on load imbalance."""
     pass
 
 class Battery:
@@ -47,6 +47,7 @@ class Battery:
         """Discharge power from battery."""
         if power > self._max_discharge_rate:
             raise LoadError('Requested power exceeds maximum discharge rate.')
+        # todo: add more edge cases
         if self._available_power - power > self._minimum_power:
             self._available_power -= power
         self._state_of_charge = self._available_power / self._capacity
