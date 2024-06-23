@@ -238,9 +238,10 @@ def add_battery(data: IncomingBattery):
     try:
         system: PhotoVoltaicSystem = get_pv_system(data['system_id'])
         battery = Battery(volts=data['volts'], amps=data['amps'])
-        system._metadata['batteries'][battery._id] = 0
+        if system._metadata:
+            system._metadata['batteries'][battery._id] = 0
+            print('post battery meta:', system._metadata)
         system._batteries.add(battery)
-        print('post battery meta:', system._metadata)
         return { 'result': 'SUCCESS' }
     except Exception as e:
         return { 'error': str(e) }
