@@ -120,6 +120,7 @@ def create_default_sim():
     system.start()
     return { 'result': system.json() }
 
+# todo: switch back to get, system id to query param
 @app.put('/pv/system')   # method changed from get to put to support request body
 def pv_system(data: SystemDetails):
     """Get PV system by _id."""
@@ -127,6 +128,27 @@ def pv_system(data: SystemDetails):
         return { 'result': get_pv_system(data['system_id']).json() }
     except Exception as e:
         return { 'error': str(e) }
+
+@app.get('/pv/system/data')
+def system_data(system_id: str, target_data: str):
+    """Get system time series."""
+    try:
+        if target_data == 'system':
+            return { 'result': get_pv_system(system_id).system_data() }
+        elif target_data == 'panels':
+            return { 'result': get_pv_system(system_id).panel_data() }
+        elif target_data == 'batteries':
+            return { 'result': get_pv_system(system_id).battery_data() }
+        elif target_data == 'inverter':
+            return { 'result': get_pv_system(system_id).inverter_data() }
+        elif target_data =='cooling':
+            return { 'result': get_pv_system(system_id).cooling_data() }
+        elif target_data == 'iter':
+            return { 'result': get_pv_system(system_id).get_iterations() }
+        else:
+            return { 'result': get_pv_system(system_id).json() }
+    except Exception as e:
+        return { 'error': str(e) } 
 
 @app.put('/pv/system/iterations')
 def pv_iterations(data: IncomingIterations):
