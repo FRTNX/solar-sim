@@ -1,4 +1,4 @@
-# Solar Simulator (Server)
+# Photovoltaic Simulator API
 
 [![Solar simulator UI](src/assets/images/solar-sim.png?raw=true "Solar Simulator")](https://github.com/FRTNX/solar-sim/blob/master/src/assets/images/solar-sim.png)
 
